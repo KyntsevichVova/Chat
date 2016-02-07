@@ -1,28 +1,27 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import static javax.swing.JFrame.setDefaultLookAndFeelDecorated;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class LoginFrame extends JFrame {
+public class RegisterFrame extends JFrame {
 
     public static JTextField logField;
     public static JTextField passField;
-    private static LoginFrame instance;
+    private static RegisterFrame instance;
 
-    public LoginFrame() {
-        super("Signing in");
+    public RegisterFrame() {
+        super("Registration");
         instance = this;
         createGUI();
     }
 
-    public static LoginFrame getInstance() {
+    public static RegisterFrame getInstance() {
         return instance;
     }
 
@@ -50,17 +49,17 @@ public class LoginFrame extends JFrame {
         JPanel panel2 = new JPanel();
         JPanel panel3 = new JPanel();
 
-        JButton button = new JButton("Log In");
+        JButton button = new JButton("Register");
 
         logField = new JTextField();
         logField.setColumns(20);
         passField = new JTextField();
         passField.setColumns(20);
 
-        LoginListener llist = new LoginListener();
-        button.addActionListener(llist);
-        logField.addActionListener(llist);
-        passField.addActionListener(llist);
+        RegisterListener rlist = new RegisterListener();
+        button.addActionListener(rlist);
+        logField.addActionListener(rlist);
+        passField.addActionListener(rlist);
 
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel1.setLayout(new FlowLayout());

@@ -1,4 +1,4 @@
-package server;
+package com.kyntsevichvova.chat.server;
 
 import java.io.BufferedReader;
 

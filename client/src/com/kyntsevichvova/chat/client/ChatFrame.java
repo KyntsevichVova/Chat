@@ -1,4 +1,4 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;

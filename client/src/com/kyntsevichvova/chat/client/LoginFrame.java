@@ -1,4 +1,4 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -9,19 +9,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class RegisterFrame extends JFrame {
+public class LoginFrame extends JFrame {
 
     public static JTextField logField;
     public static JTextField passField;
-    private static RegisterFrame instance;
+    private static LoginFrame instance;
 
-    public RegisterFrame() {
-        super("Registration");
+    public LoginFrame() {
+        super("Signing in");
         instance = this;
         createGUI();
     }
 
-    public static RegisterFrame getInstance() {
+    public static LoginFrame getInstance() {
         return instance;
     }
 
@@ -49,17 +49,17 @@ public class RegisterFrame extends JFrame {
         JPanel panel2 = new JPanel();
         JPanel panel3 = new JPanel();
 
-        JButton button = new JButton("Register");
+        JButton button = new JButton("Log In");
 
         logField = new JTextField();
         logField.setColumns(20);
         passField = new JTextField();
         passField.setColumns(20);
 
-        RegisterListener rlist = new RegisterListener();
-        button.addActionListener(rlist);
-        logField.addActionListener(rlist);
-        passField.addActionListener(rlist);
+        LoginListener llist = new LoginListener();
+        button.addActionListener(llist);
+        logField.addActionListener(llist);
+        passField.addActionListener(llist);
 
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel1.setLayout(new FlowLayout());

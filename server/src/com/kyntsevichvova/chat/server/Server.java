@@ -1,17 +1,14 @@
-package server;
+package com.kyntsevichvova.chat.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -27,7 +24,7 @@ public class Server {
     private int port = 9523;
     static private ServerSocket serverSocket;
     //private String pathToDB = "C:\\DB\\";
-    private String pathToDB = "e:\\share\\vova-server\\kek\\";
+    private String pathToDB = "e:/share/vova-server/kek/";
     private String nameDB = "db.txt";
     private String nameLog = "log.txt";
     private static File fileDB;
@@ -78,17 +75,20 @@ public class Server {
         } catch (Throwable t) {
             System.out.println("Can't get OutputStream");
         }
-        DB = new HashMap<String, String>(0);
-        connected = new HashMap<Socket, String>(0);
+        DB = new HashMap<>(0);
+        connected = new HashMap<>(0);
 
         try {
             if (fileDB.exists()) {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileDB));
-                DB = (HashMap<String, String>) in.readObject();
-                in.close();
+                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileDB))) {
+                    DB = (HashMap<String, String>) in.readObject();
+                }
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+
+            System.out.println("DB file is empty or corrupted");
+            System.out.println("Creating new DB...");
+            DB = new HashMap<>();
         }
     }
 

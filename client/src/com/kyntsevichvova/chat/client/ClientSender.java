@@ -1,7 +1,6 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.io.DataOutputStream;
-import java.net.Socket;
 
 public class ClientSender implements Runnable {
 
