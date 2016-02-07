@@ -1,18 +1,18 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataOutputStream;
 
-public class RegisterListener implements ActionListener {
+public class LoginListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String login = Client.getLogin();
-        String password = Client.getPassword();
+        String login = LoginFrame.getLogin();
+        String password = LoginFrame.getPassword();
+
         if (check(login) && check(password)) {
-            RegisterFrame.getInstance().dispose();
-            new Thread(new ClientSender("register", login + " " + password)).start();
+            LoginFrame.getInstance().dispose();
+            new Thread(new ClientSender("login", login + " " + password)).start();
         } else {
             new ErrorFrame("Forbidden login/password");
         }

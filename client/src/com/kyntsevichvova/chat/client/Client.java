@@ -1,8 +1,7 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -13,7 +12,7 @@ import java.net.Socket;
 public class Client {
 
     private static int serverPort = 9523;
-    private static String serverAddress = "wrt.qjex.xyz";
+    private static String serverAddress = "192.168.1.243";
     private static InetAddress ipAddress;
     private static Socket socket;
     private static DataOutputStream dos;

@@ -1,9 +1,7 @@
-package client;
+package com.kyntsevichvova.chat.client;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
-import javafx.scene.chart.PieChart;
 
 public class ClientReceiver implements Runnable {
 
