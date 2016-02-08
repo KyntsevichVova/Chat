@@ -29,6 +29,7 @@ public class ChatFrame extends JFrame {
     public static void write(String mes) {
         System.out.println(mes);
         textArea.append(mes);
+        textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
     public static String getMessage() {
