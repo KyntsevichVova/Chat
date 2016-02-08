@@ -1,6 +1,7 @@
 package com.kyntsevichvova.chat.client;
 
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 public class ClientReceiver implements Runnable {
@@ -17,9 +18,14 @@ public class ClientReceiver implements Runnable {
         try {
             DataInputStream dis = Client.getDIS();
             while (true) {
-                String arg = dis.readUTF();
-                String mes = dis.readUTF();
                 String tmp = dis.readUTF();
+                String arg = "", mes = "";
+                for (int i = 0; i < tmp.length() && tmp.charAt(i) != ' '; i++) {
+                    arg += tmp.charAt(i);
+                }
+                for (int i = arg.length() + 1; i < tmp.length(); i++) {
+                    mes += tmp.charAt(i);
+                }
                 if (arg.startsWith("/error")) {
                     new ErrorFrame(mes);
                 }
@@ -27,8 +33,8 @@ public class ClientReceiver implements Runnable {
                     ChatFrame.write(mes);
                 }
             }
-        } catch (Throwable t) {
-            t.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
             System.exit(-1);
         }
     }

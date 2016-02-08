@@ -18,6 +18,7 @@ public class ChatFrame extends JFrame {
     private JButton regButton;
     private JButton logButton;
     private JButton sendButton;
+    private JButton clearButton;
     public static ChatFrame instance;
 
     public ChatFrame() {
@@ -38,6 +39,10 @@ public class ChatFrame extends JFrame {
         return text;
     }
 
+    public static void clearTextArea() {
+        textArea.setText(null);
+    }
+
     public void createGUI() {
         setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -45,6 +50,7 @@ public class ChatFrame extends JFrame {
         regButton = new JButton("Register");
         logButton = new JButton("Log In");
         sendButton = new JButton("Send");
+        clearButton = new JButton("Clear chat");
 
         runRegListener reglist = new runRegListener();
         regButton.addActionListener(reglist);
@@ -52,11 +58,14 @@ public class ChatFrame extends JFrame {
         logButton.addActionListener(loglist);
         SendListener sendlist = new SendListener();
         sendButton.addActionListener(sendlist);
+        ClearListener clist = new ClearListener();
+        clearButton.addActionListener(clist);
 
         JPanel upPanel = new JPanel();
         upPanel.setLayout(new FlowLayout());
         upPanel.add(regButton);
         upPanel.add(logButton);
+        upPanel.add(clearButton);
 
         textArea = new JTextArea(100, 100);
         JScrollPane chat = new JScrollPane(textArea);
@@ -81,6 +90,5 @@ public class ChatFrame extends JFrame {
         getContentPane().add(panel);
         setPreferredSize(new Dimension(800, 600));
         setVisible(true);
-        //setLocationRelativeTo(null);
     }
 }

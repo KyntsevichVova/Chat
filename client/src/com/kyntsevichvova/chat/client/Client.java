@@ -2,12 +2,13 @@ package com.kyntsevichvova.chat.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
 /**
  *
- * @author Володя
+ * @author Volodya
  */
 public class Client {
 
@@ -48,9 +49,9 @@ public class Client {
             dis = new DataInputStream(socket.getInputStream());
             ChatFrame chatFrame = new ChatFrame();
             chatFrame.pack();
-            ClientReceiver cr = new ClientReceiver();
-        } catch (Throwable t) {
-            t.printStackTrace();
+            new ClientReceiver();
+        } catch (IOException e) {
+            e.printStackTrace();
             System.exit(-4);
         }
     }

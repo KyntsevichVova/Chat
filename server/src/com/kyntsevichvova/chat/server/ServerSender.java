@@ -1,6 +1,7 @@
 package com.kyntsevichvova.chat.server;
 
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,9 +29,7 @@ public class ServerSender implements Runnable {
     public void sendError() {
         try {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF("/" + arg + '\n');
-            dos.writeUTF(mes + '\n');
-            dos.writeUTF("/endof" + arg + '\n');
+            dos.writeUTF("/" + arg + " " + mes);
             dos.flush();
         } catch (Throwable t) {
             t.printStackTrace();
@@ -50,12 +49,10 @@ public class ServerSender implements Runnable {
             String log = receiver.getValue();
             try {
                 DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
-                dos.writeUTF("/" + arg + "\n");
-                dos.writeUTF(senderLogin + "[" + date + "] : " + mes);
-                dos.writeUTF("/endof" + arg);
+                dos.writeUTF("/" + arg + " " + senderLogin + "[" + date + "] : " + mes);
                 dos.flush();
-            } catch (Throwable t) {
-                t.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
                 System.exit(-3);
             }
         }

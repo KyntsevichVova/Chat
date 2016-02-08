@@ -15,9 +15,14 @@ public class ServerReceiver implements Runnable {
     public void run() {
         while (socket.isConnected()) {
             try {
-                String arg = dis.readUTF();
-                String message = dis.readUTF();
                 String tmp = dis.readUTF();
+                String arg = "", message = "";
+                for (int i = 0; i < tmp.length() && tmp.charAt(i) != ' '; i++) {
+                    arg += tmp.charAt(i);
+                }
+                for (int i = arg.length() + 1; i < tmp.length(); i++) {
+                    message += tmp.charAt(i);
+                }
                 if (Server.isDisconnected(socket) && arg.startsWith("/message")) {
                     new Thread(new ServerSender("error", "You're not logged in", socket)).start();
                     continue;

@@ -1,6 +1,7 @@
 package com.kyntsevichvova.chat.client;
 
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class ClientSender implements Runnable {
 
@@ -11,11 +12,9 @@ public class ClientSender implements Runnable {
     public void run() {
         try {
             DataOutputStream dos = Client.getDOS();
-            dos.writeUTF("/" + arg + "\n");
-            dos.writeUTF(message + "\n");
-            dos.writeUTF("/endof" + arg + "\n");
+            dos.writeUTF("/" + arg + " " + message + "\n");
             dos.flush();
-        } catch (Throwable t) {
+        } catch (IOException e) {
             new ErrorFrame("Server is disabled");
         }
     }
