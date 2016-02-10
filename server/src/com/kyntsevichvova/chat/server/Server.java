@@ -59,11 +59,12 @@ public class Server {
         this.worker = new ServerWorker(this);
 
         this.socketHandler = new Thread(() -> {
-            while (!Thread.interrupted()) {
+            while (!serverSocket.isClosed() && !Thread.interrupted()) {
                 try {
                     Socket socket = serverSocket.accept();
                     ServerLogger.log(String.format("New socket connected : %s", socket));
-                    new Thread(new ClientConnection(socket, this)).start();
+                    new ClientConnection(socket, this).start();
+
                 } catch (IOException e) {
                     //
                 }
@@ -85,7 +86,7 @@ public class Server {
     }
 
     public void shutDown() {
-        ServerLogger.log("Server is stop");
+        ServerLogger.log("Server stop signal received");
         this.stop();
     }
 
@@ -136,10 +137,10 @@ public class Server {
         if (checkRegister(login)) {
             DB.put(login, password);
             updateDB();
+            ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
+        } else {
             ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
             connection.sendError("This login is engaged");
-        } else {
-            ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
         }
     }
 
@@ -179,15 +180,25 @@ public class Server {
 
     public void join() {
         this.worker.join();
+        ServerLogger.log("Joined in ServerWorker");
         try {
             this.socketHandler.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        ServerLogger.log("Joined in SocketHandler");
     }
 
     public void stop() {
         this.worker.stop();
+        ServerLogger.log("ServerWorker is stopped");
         this.socketHandler.interrupt();
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ServerLogger.log("ServerHandler is interrupted");
+        ClientConnection.stopAll(this);
     }
 }

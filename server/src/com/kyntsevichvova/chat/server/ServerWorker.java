@@ -13,11 +13,11 @@ public class ServerWorker implements Runnable {
     public ServerWorker(Server server) {
         this.server = server;
         this.thread = new Thread(this);
-        this.br = new BufferedReader(new InputStreamReader(System.in));
     }
 
     @Override
     public void run() {
+        this.br = new BufferedReader(new InputStreamReader(System.in));
         while (!Thread.interrupted()) {
             try {
                 String s = br.readLine();
@@ -37,6 +37,11 @@ public class ServerWorker implements Runnable {
 
     public void stop() {
         thread.interrupt();
+        try {
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void join() {
