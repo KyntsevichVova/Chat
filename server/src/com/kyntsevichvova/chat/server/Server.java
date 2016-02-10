@@ -1,15 +1,6 @@
 package com.kyntsevichvova.chat.server;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -21,18 +12,18 @@ import java.util.Map;
  */
 public class Server {
 
-    private int port = 9523;
     static private ServerSocket serverSocket;
-    //private String pathToDB = "C:\\DB\\";
-    private String pathToDB = "e:/share/vova-server/kek/";
-    private String nameDB = "db.txt";
-    private String nameLog = "log.txt";
     private static File fileDB;
     private static File fileLog;
     private static Map<String, String> DB;
     private static Map<Socket, String> connected;
     private static BufferedReader br;
     private static PrintWriter pw;
+    private int port = 9523;
+    //private String pathToDB = "C:\\DB\\";
+    private String pathToDB = "e:/share/vova-server/kek/";
+    private String nameDB = "db.txt";
+    private String nameLog = "log.txt";
 
     public Server() throws Throwable {
         serverSocket = new ServerSocket(port);
@@ -75,8 +66,8 @@ public class Server {
         } catch (Throwable t) {
             System.out.println("Can't get OutputStream");
         }
-        DB = new HashMap<>(0);
-        connected = new HashMap<>(0);
+        DB = new HashMap<>();
+        connected = new HashMap<>();
 
         try {
             if (fileDB.exists()) {

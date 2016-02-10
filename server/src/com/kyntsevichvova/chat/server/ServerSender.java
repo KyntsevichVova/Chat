@@ -10,11 +10,17 @@ import java.util.Map;
 public class ServerSender implements Runnable {
 
     private String arg;
-    private String mes;
+    private String message;
     private Socket socket;
     private Map<Socket, String> receivers;
     private String date;
     private String senderLogin;
+
+    public ServerSender(String arg, String message, Socket socket) {
+        this.arg = arg;
+        this.message = message;
+        this.socket = socket;
+    }
 
     @Override
     public void run() {
@@ -29,7 +35,7 @@ public class ServerSender implements Runnable {
     public void sendError() {
         try {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeUTF("/" + arg + " " + mes);
+            dos.writeUTF("/" + arg + " " + message);
             dos.flush();
         } catch (Throwable t) {
             t.printStackTrace();
@@ -45,22 +51,16 @@ public class ServerSender implements Runnable {
         date = today.format(formatter);
 
         for (Map.Entry<Socket, String> receiver : receivers.entrySet()) {
-            Socket soc = receiver.getKey();
+            Socket socket = receiver.getKey();
             String log = receiver.getValue();
             try {
-                DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
-                dos.writeUTF("/" + arg + " " + senderLogin + "[" + date + "] : " + mes);
+                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                dos.writeUTF("/" + arg + " " + senderLogin + "[" + date + "] : " + message);
                 dos.flush();
             } catch (IOException e) {
                 e.printStackTrace();
                 System.exit(-3);
             }
         }
-    }
-
-    public ServerSender(String a, String m, Socket soc) {
-        arg = a;
-        mes = m;
-        socket = soc;
     }
 }

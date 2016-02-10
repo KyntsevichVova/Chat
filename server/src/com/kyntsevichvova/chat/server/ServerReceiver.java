@@ -11,6 +11,12 @@ public class ServerReceiver implements Runnable {
     private DataInputStream dis;
     private DataOutputStream dos;
 
+    public ServerReceiver(Socket socket) throws IOException {
+        this.socket = socket;
+        dis = new DataInputStream(this.socket.getInputStream());
+        dos = new DataOutputStream(this.socket.getOutputStream());
+    }
+
     @Override
     public void run() {
         while (socket.isConnected()) {
@@ -37,17 +43,11 @@ public class ServerReceiver implements Runnable {
                 if (arg.startsWith("/login")) {
                     new Thread(new Loginer(socket, message)).start();
                 }
-            } catch (Throwable t) {
-                new Thread(new ServerLogger(String.format("Disconnected %s%n", socket))).start();
-                Server.disconnect(socket);
-                break;
+            } catch (IOException e) {
+                new ServerLogger("Exception was caught while reading message%n");
             }
         }
-    }
-
-    public ServerReceiver(Socket soc) throws IOException {
-        socket = soc;
-        dis = new DataInputStream(socket.getInputStream());
-        dos = new DataOutputStream(socket.getOutputStream());
+        new ServerLogger(String.format("Disconnected %s%n", socket));
+        Server.disconnect(socket);
     }
 }
