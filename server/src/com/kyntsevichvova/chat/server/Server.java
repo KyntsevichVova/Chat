@@ -13,8 +13,8 @@ import java.util.Map;
 public class Server {
 
     //static final String PATH_TO_DB = "e:/share/vova-server/kek/";
-    //static final String PATH_TO_DB = "c:/home/vova/ ";
-    static final String PATH_TO_DB = "C:\\DB\\";
+    static final String PATH_TO_DB = "c:/home/vova/ ";
+    //static final String PATH_TO_DB = "C:\\DB\\";
 
     private String DB_NAME = "db.txt";
 
