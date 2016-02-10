@@ -13,8 +13,7 @@ import java.net.Socket;
 public class Client {
 
     private static int serverPort = 9523;
-    //private static String serverAddress = "wrt.qjex.xyz";
-    private static String serverAddress = "127.0.0.1";
+    private static String serverAddress = "wrt.qjex.xyz";
     private static InetAddress ipAddress;
     private static Socket socket;
     private static DataOutputStream dos;
