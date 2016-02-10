@@ -9,29 +9,35 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class RegisterFrame extends JFrame {
+public class FormFrame extends JFrame {
 
-    public static JTextField logField;
-    public static JTextField passField;
-    private static RegisterFrame instance;
+    private JTextField logField;
+    private JTextField passField;
+    private FormFrame instance;
+    private String type;
 
-    public RegisterFrame() {
-        super("Registration");
+    public FormFrame(String s) {
+        super("Signing " + s);
+        type = s;
         instance = this;
         createGUI();
     }
 
-    public static RegisterFrame getInstance() {
+    public String getTypeOf() {
+        return type;
+    }
+
+    public FormFrame getInstance() {
         return instance;
     }
 
-    public static String getLogin() {
+    public String getLogin() {
         String login = logField.getText();
         logField.setText("");
         return login;
     }
 
-    public static String getPassword() {
+    public String getPassword() {
         String password = passField.getText();
         passField.setText("");
         return password;
@@ -49,17 +55,17 @@ public class RegisterFrame extends JFrame {
         JPanel panel2 = new JPanel();
         JPanel panel3 = new JPanel();
 
-        JButton button = new JButton("Register");
+        JButton button = new JButton("Sign " + type);
 
         logField = new JTextField();
         logField.setColumns(20);
         passField = new JTextField();
         passField.setColumns(20);
 
-        RegisterListener rlist = new RegisterListener();
-        button.addActionListener(rlist);
-        logField.addActionListener(rlist);
-        passField.addActionListener(rlist);
+        FormListener list = new FormListener(instance);
+        button.addActionListener(list);
+        logField.addActionListener(list);
+        passField.addActionListener(list);
 
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel1.setLayout(new FlowLayout());
@@ -86,5 +92,4 @@ public class RegisterFrame extends JFrame {
         setLocationRelativeTo(null);
 
     }
-
 }

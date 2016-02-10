@@ -51,13 +51,14 @@ public class ChatFrame extends JFrame {
         logButton = new JButton("Log In");
         sendButton = new JButton("Send");
         clearButton = new JButton("Clear chat");
-
-        runRegListener reglist = new runRegListener();
-        regButton.addActionListener(reglist);
-        runLogListener loglist = new runLogListener();
-        logButton.addActionListener(loglist);
-        SendListener sendlist = new SendListener();
-        sendButton.addActionListener(sendlist);
+        
+        RunListener list = new RunListener();
+        regButton.setActionCommand("up");
+        regButton.addActionListener(list);
+        logButton.setActionCommand("in");
+        logButton.addActionListener(list);
+        SendListener slist = new SendListener();
+        sendButton.addActionListener(slist);
         ClearListener clist = new ClearListener();
         clearButton.addActionListener(clist);
 
@@ -72,7 +73,7 @@ public class ChatFrame extends JFrame {
         textArea.setEditable(false);
         textField = new JTextField();
         textField.setColumns(30);
-        textField.addActionListener(sendlist);
+        textField.addActionListener(slist);
 
         JLabel label = new JLabel("Write Message");
         JPanel dPanel = new JPanel();

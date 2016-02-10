@@ -2,6 +2,7 @@ package com.kyntsevichvova.chat.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -26,7 +27,8 @@ public class ClientConnection implements Runnable {
     }
 
     public static void stopAll(Server server) {
-        if (!allConnections.containsKey(server)) allConnections.put(server, new HashSet<>());
+        if (!allConnections.containsKey(server)) 
+            allConnections.put(server, new HashSet<>());
         List<ClientConnection> list = new ArrayList<>(allConnections.get(server));
         list.forEach(ClientConnection::stop);
     }
@@ -37,7 +39,9 @@ public class ClientConnection implements Runnable {
             try {
                 String tmp = dis.readUTF();
                 server.onMessage(tmp, this);
-            } catch (SocketException e) {
+             } catch (SocketException e) {
+                break;
+            } catch (EOFException e) {
                 break;
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");
@@ -85,7 +89,8 @@ public class ClientConnection implements Runnable {
 
     public void start() {
         thread.start();
-        if (!allConnections.containsKey(server)) allConnections.put(server, new HashSet<>());
+        if (!allConnections.containsKey(server)) 
+            allConnections.put(server, new HashSet<>());
         allConnections.get(server).add(this);
     }
 
@@ -96,7 +101,8 @@ public class ClientConnection implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (!allConnections.containsKey(server)) allConnections.put(server, new HashSet<>());
+        if (!allConnections.containsKey(server))
+            allConnections.put(server, new HashSet<>());
         allConnections.get(server).remove(this);
     }
 }

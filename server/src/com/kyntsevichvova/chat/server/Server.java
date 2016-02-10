@@ -13,7 +13,8 @@ import java.util.Map;
 public class Server {
 
     //static final String PATH_TO_DB = "e:/share/vova-server/kek/";
-    static final String PATH_TO_DB = "c:/home/vova/ ";
+    //static final String PATH_TO_DB = "c:/home/vova/ ";
+    static final String PATH_TO_DB = "C:\\DB\\";
 
     private String DB_NAME = "db.txt";
 
@@ -106,42 +107,42 @@ public class Server {
         return !DB.containsKey(login);
     }
 
-    private void login(String message, ClientConnection connection) {
-        String login = "";
-        String password = "";
-        for (int i = 0; message.charAt(i) != ' '; i++) {
-            login += message.charAt(i);
-        }
-        for (int i = login.length() + 1; i != message.length() && message.charAt(i) != '\n'; i++) {
-            password += message.charAt(i);
-        }
+    private void signIn(String login, String password, ClientConnection connection) {
         if (checkAuth(login, password)) {
-            ServerLogger.log(String.format("New attempt of login :%nLogin = %s%nFrom %s", login, connection));
             connection.setLogin(login);
             connections.connect(connection, login);
+            ServerLogger.log(String.format("New attempt of signing in :%nLogin = %s%nFrom %s", login, connection));
         } else {
             connection.sendError("Wrong login/password");
-            ServerLogger.log(String.format("New bad attempt of login :%nLogin = %s%nPassword = %s%nFrom %s", login, password, connection));
+            ServerLogger.log(String.format("New bad attempt of signing in :%nLogin = %s%nPassword = %s%nFrom %s", login, password, connection));
         }
     }
 
-    private void register(String message, ClientConnection connection) {
-        String login = "";
-        String password = "";
-        for (int i = 0; message.charAt(i) != ' '; i++) {
-            login += message.charAt(i);
-        }
-        for (int i = login.length() + 1; i != message.length() && message.charAt(i) != '\n'; i++) {
-            password += message.charAt(i);
-        }
+    private void signUp(String login, String password, ClientConnection connection) {
         if (checkRegister(login)) {
             DB.put(login, password);
             updateDB();
             ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
         } else {
-            ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
             connection.sendError("This login is engaged");
+            ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
         }
+    }
+
+    private void parse(String arg, String mes, ClientConnection connection) {
+        String login = "";
+        String password = "";
+        for (int i = 0; mes.charAt(i) != ' '; i++) {
+            login += mes.charAt(i);
+        }
+        for (int i = login.length() + 1; i != mes.length() && mes.charAt(i) != '\n'; i++) {
+            password += mes.charAt(i);
+        }
+        if (arg.startsWith("/signup"))
+            signUp(login, password, connection);
+        else
+            signIn(login, password, connection);
+        
     }
 
     public void onMessage(String tmp, ClientConnection connection) {
@@ -160,11 +161,8 @@ public class Server {
             ServerLogger.log(String.format("New message from %s%n%s", connection, message));
             connections.broadcastMessage(message, connection);
         }
-        if (arg.startsWith("/register")) {
-            register(message, connection);
-        }
-        if (arg.startsWith("/login")) {
-            login(message, connection);
+        if (arg.startsWith("/sign")) {
+            parse(arg, message, connection);
         }
     }
 
