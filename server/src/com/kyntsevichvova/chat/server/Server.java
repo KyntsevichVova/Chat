@@ -12,14 +12,18 @@ import java.util.Map;
  */
 public class Server {
 
-    static final String PATH_TO_DB = "e:/share/vova-server/kek/";
+    //static final String PATH_TO_DB = "e:/share/vova-server/kek/";
+    static final String PATH_TO_DB = "c:/home/vova/ ";
+
     private String DB_NAME = "db.txt";
 
     private ServerSocket serverSocket;
     private File fileDB;
     private Map<String, String> DB;
-    private ServerWorker worker;
     private Connections connections;
+
+    private ServerWorker worker;
+    private Thread socketHandler;
 
     public Server(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -27,13 +31,13 @@ public class Server {
 
         File dir = new File(PATH_TO_DB);
         if (!dir.exists()) {
-            System.out.println("Trying to make dir...");
+            ServerLogger.log("Trying to make dir...");
             dir.mkdir();
         }
 
         fileDB = new File(PATH_TO_DB + DB_NAME);
         if (!fileDB.exists()) {
-            System.out.println("Trying to make DB file...");
+            ServerLogger.log("Trying to make DB file...");
             fileDB.createNewFile();
         }
 
@@ -48,11 +52,23 @@ public class Server {
                 }
             }
         } catch (IOException e) {
-            System.out.println("DB file is empty or corrupted");
-            System.out.println("Creating new DB...");
+            ServerLogger.log("DB file is empty or corrupted");
+            ServerLogger.log("Creating new DB...");
         }
 
         this.worker = new ServerWorker(this);
+
+        this.socketHandler = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    ServerLogger.log(String.format("New socket connected : %s", socket));
+                    new Thread(new ClientConnection(socket, this)).start();
+                } catch (IOException e) {
+                    //
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -64,47 +80,47 @@ public class Server {
             return;
         }
         server.start();
-        ServerLogger.log("Init complete");
+        server.join();
+        ServerLogger.log("End of main was reached");
     }
 
     public void shutDown() {
-        ServerLogger.log("Server is shut down");
-        System.exit(0);
+        ServerLogger.log("Server is stop");
+        this.stop();
     }
 
-    public boolean register123(String login, String password) {
-        if (DB.containsKey(login)) {
-            return false;
-        }
-        DB.put(login, password);
+    private void updateDB() {
         try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(fileDB))) {
             os.writeObject(DB);
-            os.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return true;
     }
 
-    public boolean isRegistered(String login, String password) {
+    private boolean checkAuth(String login, String password) {
         return (DB.containsKey(login) && DB.get(login).equals(password));
     }
 
-    private void login() {
+    private boolean checkRegister(String login) {
+        return !DB.containsKey(login);
+    }
+
+    private void login(String message, ClientConnection connection) {
         String login = "";
         String password = "";
-        for (int i = 0; arg.charAt(i) != ' '; i++) {
-            login += arg.charAt(i);
+        for (int i = 0; message.charAt(i) != ' '; i++) {
+            login += message.charAt(i);
         }
-        for (int i = login.length() + 1; i != arg.length() && arg.charAt(i) != '\n'; i++) {
-            password += arg.charAt(i);
+        for (int i = login.length() + 1; i != message.length() && message.charAt(i) != '\n'; i++) {
+            password += message.charAt(i);
         }
-        if (Server.isRegistered(login, password)) {
-            new Thread(new ServerLogger(String.format("New attempt of login :%nLogin = %s%nFrom %s", login, socket))).start();
-            Server.logIn(socket, login);
+        if (checkAuth(login, password)) {
+            ServerLogger.log(String.format("New attempt of login :%nLogin = %s%nFrom %s", login, connection));
+            connection.setLogin(login);
+            connections.connect(connection, login);
         } else {
-            new Thread(new ServerSender("error", "Wrong login/password", socket)).start();
-            new Thread(new ServerLogger(String.format("New bad attempt of login :%nLogin = %s%nPassword = %s%nFrom %s", login, password, socket))).start();
+            connection.sendError("Wrong login/password");
+            ServerLogger.log(String.format("New bad attempt of login :%nLogin = %s%nPassword = %s%nFrom %s", login, password, connection));
         }
     }
 
@@ -117,11 +133,13 @@ public class Server {
         for (int i = login.length() + 1; i != message.length() && message.charAt(i) != '\n'; i++) {
             password += message.charAt(i);
         }
-        if (!Server.register(login, password)) {
-            new Thread(new ServerLogger(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password))).start();
-            new Thread(new ServerSender("error", "This login is engaged", socket)).start();
+        if (checkRegister(login)) {
+            DB.put(login, password);
+            updateDB();
+            ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
+            connection.sendError("This login is engaged");
         } else {
-            new Thread(new ServerLogger(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, socket))).start();
+            ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
         }
     }
 
@@ -145,7 +163,7 @@ public class Server {
             register(message, connection);
         }
         if (arg.startsWith("/login")) {
-            login(socket, message);
+            login(message, connection);
         }
     }
 
@@ -155,20 +173,21 @@ public class Server {
 
     public void start() {
         this.worker.start();
-        this.startSocketHandler();
+        this.socketHandler.start();
+        ServerLogger.log("Server started");
     }
 
-    private void startSocketHandler() {
-        new Thread(() -> {
-            while (true) {
-                try {
-                    Socket socket = serverSocket.accept();
-                    ServerLogger.log(String.format("New socket connected : %s", socket));
-                    new Thread(new ClientConnection(socket, this)).start();
-                } catch (IOException e) {
-                    //
-                }
-            }
-        }).start();
+    public void join() {
+        this.worker.join();
+        try {
+            this.socketHandler.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void stop() {
+        this.worker.stop();
+        this.socketHandler.interrupt();
     }
 }

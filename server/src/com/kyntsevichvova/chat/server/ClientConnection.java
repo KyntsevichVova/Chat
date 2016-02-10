@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class ClientConnection implements Runnable {
 
@@ -23,12 +24,16 @@ public class ClientConnection implements Runnable {
 
     @Override
     public void run() {
-        while (socket.isConnected()) {
+        while (socket.isConnected() && !Thread.interrupted()) {
             try {
                 String tmp = dis.readUTF();
                 server.onMessage(tmp, this);
+            } catch (SocketException e) {
+                e.printStackTrace();
+                break;
             } catch (IOException e) {
-                ServerLogger.log("Exception was caught while reading message%n");
+                ServerLogger.log("Exception was caught while reading message");
+                e.printStackTrace();
             }
         }
         server.disconnect(this);
@@ -62,11 +67,11 @@ public class ClientConnection implements Runnable {
         return this.socket.toString();
     }
 
-    public String setLogin(String login) {
-        this.login = login;
-    }
-
     public String getLogin() {
         return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
     }
 }
