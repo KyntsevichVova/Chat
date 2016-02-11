@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -62,15 +64,23 @@ public class Server {
         ServerLogger.log("End of main was reached");
     }
 
+    public String getDate() {
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - HH:mm:ss");
+        return today.format(formatter);
+    }
+
     public void shutDown() {
         ServerLogger.log("Server stop signal received");
         this.stop();
     }
 
     private void signIn(String login, String password, ClientConnection connection) {
+        signOut(connection);
         if (auth.signIn(login, password)) {
             connection.setLogin(login);
             connections.connect(connection, login);
+            connections.broadcast("info [ " + this.getDate() + "] : " + login + " вошел в чат");
             ServerLogger.log(String.format("New attempt of signing in :%nLogin = %s%nFrom %s", login, connection));
         } else {
             connection.sendError("Wrong login/password");
@@ -79,11 +89,21 @@ public class Server {
     }
 
     private void signUp(String login, String password, ClientConnection connection) {
+        signOut(connection);
         if (auth.signUp(login, password)) {
             ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
+            connections.broadcast("info [ " + this.getDate() + "] : Он зарегистрировался! => " + login);
         } else {
             connection.sendError("This login is engaged");
             ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
+        }
+    }
+
+    public void signOut(ClientConnection connection) {
+        connections.disconnect(connection);
+        if (connection.getLogin() != null) {
+            connections.broadcast("info [ " + this.getDate() + "] : " + connection.getLogin() + " вышел из чата");
+            connection.setLogin(null);
         }
     }
 
@@ -98,7 +118,8 @@ public class Server {
                 return;
             }
             ServerLogger.log(String.format("New message from %s%n%s", connection, arg2));
-            connections.broadcastMessage(arg2, connection);
+            String chatMessage = connection.getLogin() + "[" + this.getDate() + "] : " + arg2;
+            connections.broadcast(chatMessage);
         }
         if (arg.startsWith("/sign")) {
             arg2 = arg2.replace("\n", "");
@@ -114,6 +135,7 @@ public class Server {
     }
 
     public void disconnect(ClientConnection connection) {
+        this.signOut(connection);
         connections.disconnect(connection);
     }
 
