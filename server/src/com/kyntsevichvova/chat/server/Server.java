@@ -87,40 +87,29 @@ public class Server {
         }
     }
 
-    private void parse(String arg, String mes, ClientConnection connection) {
-        String login = "";
-        String password = "";
-        for (int i = 0; mes.charAt(i) != ' '; i++) {
-            login += mes.charAt(i);
-        }
-        for (int i = login.length() + 1; i != mes.length() && mes.charAt(i) != '\n'; i++) {
-            password += mes.charAt(i);
-        }
-        if (arg.startsWith("/signup"))
-            signUp(login, password, connection);
-        else
-            signIn(login, password, connection);
-
-    }
-
-    public void onMessage(String tmp, ClientConnection connection) {
-        String arg = "", message = "";
-        for (int i = 0; i < tmp.length() && tmp.charAt(i) != ' '; i++) {
-            arg += tmp.charAt(i);
-        }
-        for (int i = arg.length() + 1; i < tmp.length(); i++) {
-            message += tmp.charAt(i);
-        }
-        if (connections.isDisconnected(connection) && arg.startsWith("/message")) {
-            connection.sendError("You're not logged in");
-            return;
-        }
+    public void onMessage(String message, ClientConnection connection) {
+        int pos = message.indexOf(' ');
+        if (pos == -1) return;
+        String arg = message.substring(0, pos);
+        String arg2 = message.substring(pos + 1);
         if (arg.startsWith("/message")) {
-            ServerLogger.log(String.format("New message from %s%n%s", connection, message));
-            connections.broadcastMessage(message, connection);
+            if (connections.isDisconnected(connection)) {
+                connection.sendError("You're not logged in");
+                return;
+            }
+            ServerLogger.log(String.format("New message from %s%n%s", connection, arg2));
+            connections.broadcastMessage(arg2, connection);
         }
         if (arg.startsWith("/sign")) {
-            parse(arg, message, connection);
+            arg2 = arg2.replace("\n", "");
+            pos = arg2.indexOf(' ');
+            if (pos == -1) return;
+            String login = arg2.substring(0, pos);
+            String password = arg2.substring(pos + 1);
+            if (arg.startsWith("/signup"))
+                signUp(login, password, connection);
+            else
+                signIn(login, password, connection);
         }
     }
 
