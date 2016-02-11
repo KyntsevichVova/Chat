@@ -1,10 +1,10 @@
 package com.kyntsevichvova.chat.server;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Paths;
 
 /**
  *
@@ -12,16 +12,11 @@ import java.util.Map;
  */
 public class Server {
 
-    //static final String PATH_TO_DB = "e:/share/vova-server/kek/";
-    static final String PATH_TO_DB = "c:/home/vova/ ";
-    //static final String PATH_TO_DB = "C:\\DB\\";
-
-    private String DB_NAME = "db.txt";
+    static final String SERVER_FOLDER = "c:/home/vova/";
 
     private ServerSocket serverSocket;
-    private File fileDB;
-    private Map<String, String> DB;
     private Connections connections;
+    private Auth auth;
 
     private ServerWorker worker;
     private Thread socketHandler;
@@ -30,32 +25,13 @@ public class Server {
         this.serverSocket = new ServerSocket(port);
         this.connections = new Connections(this);
 
-        File dir = new File(PATH_TO_DB);
+        File dir = new File(SERVER_FOLDER);
         if (!dir.exists()) {
             ServerLogger.log("Trying to make dir...");
             dir.mkdir();
         }
 
-        fileDB = new File(PATH_TO_DB + DB_NAME);
-        if (!fileDB.exists()) {
-            ServerLogger.log("Trying to make DB file...");
-            fileDB.createNewFile();
-        }
-
-        DB = new HashMap<>();
-
-        try {
-            if (fileDB.exists()) {
-                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileDB))) {
-                    DB = (HashMap<String, String>) in.readObject();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        } catch (IOException e) {
-            ServerLogger.log("DB file is empty or corrupted");
-            ServerLogger.log("Creating new DB...");
-        }
+        this.auth = new Auth(Paths.get(SERVER_FOLDER, "db.txt"));
 
         this.worker = new ServerWorker(this);
 
@@ -91,24 +67,8 @@ public class Server {
         this.stop();
     }
 
-    private void updateDB() {
-        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(fileDB))) {
-            os.writeObject(DB);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean checkAuth(String login, String password) {
-        return (DB.containsKey(login) && DB.get(login).equals(password));
-    }
-
-    private boolean checkRegister(String login) {
-        return !DB.containsKey(login);
-    }
-
     private void signIn(String login, String password, ClientConnection connection) {
-        if (checkAuth(login, password)) {
+        if (auth.signIn(login, password)) {
             connection.setLogin(login);
             connections.connect(connection, login);
             ServerLogger.log(String.format("New attempt of signing in :%nLogin = %s%nFrom %s", login, connection));
@@ -119,9 +79,7 @@ public class Server {
     }
 
     private void signUp(String login, String password, ClientConnection connection) {
-        if (checkRegister(login)) {
-            DB.put(login, password);
-            updateDB();
+        if (auth.signUp(login, password)) {
             ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
         } else {
             connection.sendError("This login is engaged");
@@ -142,7 +100,7 @@ public class Server {
             signUp(login, password, connection);
         else
             signIn(login, password, connection);
-        
+
     }
 
     public void onMessage(String tmp, ClientConnection connection) {
