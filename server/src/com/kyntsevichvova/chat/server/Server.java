@@ -1,10 +1,12 @@
 package com.kyntsevichvova.chat.server;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -12,16 +14,11 @@ import java.util.Map;
  */
 public class Server {
 
-    //static final String PATH_TO_DB = "e:/share/vova-server/kek/";
-    static final String PATH_TO_DB = "c:/home/vova/ ";
-    //static final String PATH_TO_DB = "C:\\DB\\";
-
-    private String DB_NAME = "db.txt";
+    static final String SERVER_FOLDER = "c:/home/vova/";
 
     private ServerSocket serverSocket;
-    private File fileDB;
-    private Map<String, String> DB;
     private Connections connections;
+    private Auth auth;
 
     private ServerWorker worker;
     private Thread socketHandler;
@@ -30,32 +27,13 @@ public class Server {
         this.serverSocket = new ServerSocket(port);
         this.connections = new Connections(this);
 
-        File dir = new File(PATH_TO_DB);
+        File dir = new File(SERVER_FOLDER);
         if (!dir.exists()) {
             ServerLogger.log("Trying to make dir...");
             dir.mkdir();
         }
 
-        fileDB = new File(PATH_TO_DB + DB_NAME);
-        if (!fileDB.exists()) {
-            ServerLogger.log("Trying to make DB file...");
-            fileDB.createNewFile();
-        }
-
-        DB = new HashMap<>();
-
-        try {
-            if (fileDB.exists()) {
-                try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileDB))) {
-                    DB = (HashMap<String, String>) in.readObject();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        } catch (IOException e) {
-            ServerLogger.log("DB file is empty or corrupted");
-            ServerLogger.log("Creating new DB...");
-        }
+        this.auth = new Auth(Paths.get(SERVER_FOLDER, "db.txt"));
 
         this.worker = new ServerWorker(this);
 
@@ -86,31 +64,23 @@ public class Server {
         ServerLogger.log("End of main was reached");
     }
 
+    public String getDate() {
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - HH:mm:ss");
+        return today.format(formatter);
+    }
+
     public void shutDown() {
         ServerLogger.log("Server stop signal received");
         this.stop();
     }
 
-    private void updateDB() {
-        try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(fileDB))) {
-            os.writeObject(DB);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean checkAuth(String login, String password) {
-        return (DB.containsKey(login) && DB.get(login).equals(password));
-    }
-
-    private boolean checkRegister(String login) {
-        return !DB.containsKey(login);
-    }
-
     private void signIn(String login, String password, ClientConnection connection) {
-        if (checkAuth(login, password)) {
+        signOut(connection);
+        if (auth.signIn(login, password)) {
             connection.setLogin(login);
             connections.connect(connection, login);
+            connections.broadcast("info [ " + this.getDate() + "] : " + login + " вошел в чат");
             ServerLogger.log(String.format("New attempt of signing in :%nLogin = %s%nFrom %s", login, connection));
         } else {
             connection.sendError("Wrong login/password");
@@ -119,54 +89,53 @@ public class Server {
     }
 
     private void signUp(String login, String password, ClientConnection connection) {
-        if (checkRegister(login)) {
-            DB.put(login, password);
-            updateDB();
+        signOut(connection);
+        if (auth.signUp(login, password)) {
             ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
+            connections.broadcast("info [ " + this.getDate() + "] : Он зарегистрировался! => " + login);
         } else {
             connection.sendError("This login is engaged");
             ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
         }
     }
 
-    private void parse(String arg, String mes, ClientConnection connection) {
-        String login = "";
-        String password = "";
-        for (int i = 0; mes.charAt(i) != ' '; i++) {
-            login += mes.charAt(i);
+    public void signOut(ClientConnection connection) {
+        connections.disconnect(connection);
+        if (connection.getLogin() != null) {
+            connections.broadcast("info [ " + this.getDate() + "] : " + connection.getLogin() + " вышел из чата");
+            connection.setLogin(null);
         }
-        for (int i = login.length() + 1; i != mes.length() && mes.charAt(i) != '\n'; i++) {
-            password += mes.charAt(i);
-        }
-        if (arg.startsWith("/signup"))
-            signUp(login, password, connection);
-        else
-            signIn(login, password, connection);
-        
     }
 
-    public void onMessage(String tmp, ClientConnection connection) {
-        String arg = "", message = "";
-        for (int i = 0; i < tmp.length() && tmp.charAt(i) != ' '; i++) {
-            arg += tmp.charAt(i);
-        }
-        for (int i = arg.length() + 1; i < tmp.length(); i++) {
-            message += tmp.charAt(i);
-        }
-        if (connections.isDisconnected(connection) && arg.startsWith("/message")) {
-            connection.sendError("You're not logged in");
-            return;
-        }
+    public void onMessage(String message, ClientConnection connection) {
+        int pos = message.indexOf(' ');
+        if (pos == -1) return;
+        String arg = message.substring(0, pos);
+        String arg2 = message.substring(pos + 1);
         if (arg.startsWith("/message")) {
-            ServerLogger.log(String.format("New message from %s%n%s", connection, message));
-            connections.broadcastMessage(message, connection);
+            if (connections.isDisconnected(connection)) {
+                connection.sendError("You're not logged in");
+                return;
+            }
+            ServerLogger.log(String.format("New message from %s%n%s", connection, arg2));
+            String chatMessage = connection.getLogin() + "[" + this.getDate() + "] : " + arg2;
+            connections.broadcast(chatMessage);
         }
         if (arg.startsWith("/sign")) {
-            parse(arg, message, connection);
+            arg2 = arg2.replace("\n", "");
+            pos = arg2.indexOf(' ');
+            if (pos == -1) return;
+            String login = arg2.substring(0, pos);
+            String password = arg2.substring(pos + 1);
+            if (arg.startsWith("/signup"))
+                signUp(login, password, connection);
+            else
+                signIn(login, password, connection);
         }
     }
 
     public void disconnect(ClientConnection connection) {
+        this.signOut(connection);
         connections.disconnect(connection);
     }
 

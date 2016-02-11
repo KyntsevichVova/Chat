@@ -1,7 +1,5 @@
 package com.kyntsevichvova.chat.server;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -30,13 +28,8 @@ public class Connections {
         connected.remove(connection);
     }
 
-    public void broadcastMessage(String message, ClientConnection connection) {
-        LocalDateTime today = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - HH:mm:ss");
-        String date = today.format(formatter);
-
-        final String messageToSend = connection.getLogin() + "[" + date + "] : " + message;
-
-        connected.forEach((key, value) -> key.sendMessage(messageToSend));
+    public void broadcast(String message) {
+        final String string = message.replace("\n", "") + "\n";
+        connected.forEach((key, value) -> key.sendMessage(string));
     }
 }

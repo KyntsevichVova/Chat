@@ -39,9 +39,7 @@ public class ClientConnection implements Runnable {
             try {
                 String tmp = dis.readUTF();
                 server.onMessage(tmp, this);
-             } catch (SocketException e) {
-                break;
-            } catch (EOFException e) {
+            } catch (SocketException | EOFException e) {
                 break;
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");

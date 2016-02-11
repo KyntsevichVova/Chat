@@ -15,7 +15,7 @@ public class ServerLogger {
     public static void log(String s) {
         if (pw == null) {
             try {
-                pw = new PrintWriter(new FileWriter(Server.PATH_TO_DB + LOG_FILE, true));
+                pw = new PrintWriter(new FileWriter(Server.SERVER_FOLDER + LOG_FILE, true));
             } catch (IOException e) {
                 System.err.println("Can't create log file!");
                 return;
