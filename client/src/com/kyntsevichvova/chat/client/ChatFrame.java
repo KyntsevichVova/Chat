@@ -19,6 +19,8 @@ public class ChatFrame extends JFrame {
     private JButton logButton;
     private JButton sendButton;
     private JButton clearButton;
+    private static JButton swipeButton;
+    private static boolean swipe = true;
     public static ChatFrame instance;
 
     public ChatFrame() {
@@ -30,7 +32,8 @@ public class ChatFrame extends JFrame {
     public static void write(String mes) {
         System.out.println(mes);
         textArea.append(mes);
-        textArea.setCaretPosition(textArea.getDocument().getLength());
+        if (swipe)
+            textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
     public static String getMessage() {
@@ -42,6 +45,16 @@ public class ChatFrame extends JFrame {
     public static void clearTextArea() {
         textArea.setText(null);
     }
+    
+    public static void changeSwipe(){
+        swipe = !swipe;
+        if (swipe)
+            swipeButton.setText("Swiping is ON");
+        else
+            swipeButton.setText("Swiping is OFF");
+        if (swipe)
+            textArea.setCaretPosition(textArea.getDocument().getLength());
+    }
 
     public void createGUI() {
         setDefaultLookAndFeelDecorated(true);
@@ -51,6 +64,7 @@ public class ChatFrame extends JFrame {
         logButton = new JButton("Log In");
         sendButton = new JButton("Send");
         clearButton = new JButton("Clear chat");
+        swipeButton = new JButton("Swiping ON");
         
         RunListener list = new RunListener();
         regButton.setActionCommand("up");
@@ -61,18 +75,21 @@ public class ChatFrame extends JFrame {
         sendButton.addActionListener(slist);
         ClearListener clist = new ClearListener();
         clearButton.addActionListener(clist);
+        SwipeListener swlist = new SwipeListener();
+        swipeButton.addActionListener(swlist);
 
         JPanel upPanel = new JPanel();
         upPanel.setLayout(new FlowLayout());
         upPanel.add(regButton);
         upPanel.add(logButton);
         upPanel.add(clearButton);
+        upPanel.add(swipeButton);
 
         textArea = new JTextArea(100, 100);
         JScrollPane chat = new JScrollPane(textArea);
         textArea.setEditable(false);
         textField = new JTextField();
-        textField.setColumns(30);
+        textField.setColumns(50);
         textField.addActionListener(slist);
 
         JLabel label = new JLabel("Write Message");
