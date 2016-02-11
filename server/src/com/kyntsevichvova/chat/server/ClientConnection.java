@@ -1,9 +1,9 @@
 package com.kyntsevichvova.chat.server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
@@ -13,16 +13,16 @@ public class ClientConnection implements Runnable {
     private static Map<Server, Set<ClientConnection>> allConnections = new HashMap<>();
     private Socket socket;
     private Server server;
-    private DataInputStream dis;
-    private DataOutputStream dos;
+    private ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
     private Thread thread;
     private String login = null;
 
     public ClientConnection(Socket socket, Server server) throws IOException {
         this.server = server;
         this.socket = socket;
-        dis = new DataInputStream(this.socket.getInputStream());
-        dos = new DataOutputStream(this.socket.getOutputStream());
+        this.objectInputStream = new ObjectInputStream(objectInputStream);
+        this.objectOutputStream = new ObjectOutputStream(objectOutputStream);
         this.thread = new Thread(this);
     }
 
@@ -37,12 +37,16 @@ public class ClientConnection implements Runnable {
     public void run() {
         while (socket.isConnected() && !Thread.interrupted()) {
             try {
-                String tmp = dis.readUTF();
-                server.onMessage(tmp, this);
+                HashMap<String, Object> map = (HashMap<String, Object>) objectInputStream.readObject();
+                server.onMessage(map, this);
             } catch (SocketException | EOFException e) {
                 break;
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (ClassCastException e) {
                 e.printStackTrace();
             }
         }
@@ -54,22 +58,16 @@ public class ClientConnection implements Runnable {
         return socket;
     }
 
-    public void sendError(String error) {
+    public void sendMessage(HashMap<String, Object> map) {
         try {
-            dos.writeUTF("/error " + error);
-            dos.flush();
+            objectOutputStream.writeObject(map);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void sendMessage(String message) {
-        try {
-            dos.writeUTF("/message " + message);
-            dos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendError(String error) {
+        this.sendMessage(Protocol.createErrorMessage(error));
     }
 
     @Override
@@ -87,7 +85,7 @@ public class ClientConnection implements Runnable {
 
     public void start() {
         thread.start();
-        if (!allConnections.containsKey(server)) 
+        if (!allConnections.containsKey(server))
             allConnections.put(server, new HashSet<>());
         allConnections.get(server).add(this);
     }

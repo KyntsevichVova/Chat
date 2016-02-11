@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 
 /**
  *
@@ -80,7 +81,7 @@ public class Server {
         if (auth.signIn(login, password)) {
             connection.setLogin(login);
             connections.connect(connection, login);
-            connections.broadcast("info [ " + this.getDate() + "] : " + login + " вошел в чат");
+            connections.broadcast(Protocol.createChatMessage("info", this.getDate(), login + " вошел в чат"));
             ServerLogger.log(String.format("New attempt of signing in :%nLogin = %s%nFrom %s", login, connection));
         } else {
             connection.sendError("Wrong login/password");
@@ -92,7 +93,7 @@ public class Server {
         signOut(connection);
         if (auth.signUp(login, password)) {
             ServerLogger.log(String.format("New registered : %nLogin = %s%nPassword = %s%n From %s", login, password, connection));
-            connections.broadcast("info [ " + this.getDate() + "] : Он зарегистрировался! => " + login);
+            connections.broadcast(Protocol.createChatMessage("info", this.getDate(), "Он зарегистрировался! => " + login));
         } else {
             connection.sendError("This login is engaged");
             ServerLogger.log(String.format("Bad attempt of registering : %nLogin = %s%nPassword = %s", login, password));
@@ -100,37 +101,43 @@ public class Server {
     }
 
     public void signOut(ClientConnection connection) {
-        connections.disconnect(connection);
         if (connection.getLogin() != null) {
-            connections.broadcast("info [ " + this.getDate() + "] : " + connection.getLogin() + " вышел из чата");
-            connection.setLogin(null);
+            connections.broadcast(Protocol.createChatMessage("info", this.getDate(), connection.getLogin() + " вышел из чата"));
         }
+        connections.disconnect(connection);
+        connection.setLogin(null);
     }
 
-    public void onMessage(String message, ClientConnection connection) {
-        int pos = message.indexOf(' ');
-        if (pos == -1) return;
-        String arg = message.substring(0, pos);
-        String arg2 = message.substring(pos + 1);
-        if (arg.startsWith("/message")) {
-            if (connections.isDisconnected(connection)) {
-                connection.sendError("You're not logged in");
+    public void onMessage(HashMap<String, Object> map, ClientConnection connection) {
+        try {
+            if (map.get("type").equals("message")) {
+                if (connections.isDisconnected(connection)) {
+                    connection.sendError("You're not logged in");
+                    return;
+                }
+                String message = (String) map.get("message");
+                message = message.replace("\n", "");
+                ServerLogger.log(String.format("New message from %s%n%s", connection, message));
+                connections.broadcast(Protocol.createChatMessage(connection.getLogin(), this.getDate(), message));
                 return;
             }
-            ServerLogger.log(String.format("New message from %s%n%s", connection, arg2));
-            String chatMessage = connection.getLogin() + "[" + this.getDate() + "] : " + arg2;
-            connections.broadcast(chatMessage);
-        }
-        if (arg.startsWith("/sign")) {
-            arg2 = arg2.replace("\n", "");
-            pos = arg2.indexOf(' ');
-            if (pos == -1) return;
-            String login = arg2.substring(0, pos);
-            String password = arg2.substring(pos + 1);
-            if (arg.startsWith("/signup"))
-                signUp(login, password, connection);
-            else
-                signIn(login, password, connection);
+
+            if (map.get("type").equals("signout")) {
+                signOut(connection);
+                return;
+            }
+
+            if (map.get("type").equals("signin")) {
+                signIn((String) map.get("login"), (String) map.get("password"), connection);
+                return;
+            }
+
+            if (map.get("type").equals("signup")) {
+                signUp((String) map.get("login"), (String) map.get("password"), connection);
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
