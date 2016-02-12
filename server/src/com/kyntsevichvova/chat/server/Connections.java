@@ -1,6 +1,5 @@
 package com.kyntsevichvova.chat.server;
 
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,7 +28,7 @@ public class Connections {
         connected.remove(connection);
     }
 
-    public void broadcast(HashMap<String, Object> map) {
-        connected.forEach((key, value) -> key.sendMessage(map));
+    public void broadcast(KLON klon) {
+        connected.forEach((key, value) -> key.sendMessage(klon));
     }
 }
