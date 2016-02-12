@@ -21,8 +21,8 @@ public class ClientConnection implements Runnable {
     public ClientConnection(Socket socket, Server server) throws IOException {
         this.server = server;
         this.socket = socket;
-        this.objectInputStream = new ObjectInputStream(objectInputStream);
-        this.objectOutputStream = new ObjectOutputStream(objectOutputStream);
+        this.objectInputStream = new ObjectInputStream(socket.getInputStream());
+        this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         this.thread = new Thread(this);
     }
 
