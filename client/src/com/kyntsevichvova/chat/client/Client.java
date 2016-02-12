@@ -1,8 +1,8 @@
 package com.kyntsevichvova.chat.client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -16,27 +16,27 @@ public class Client {
     private static String serverAddress = "wrt.qjex.xyz";
     private static InetAddress ipAddress;
     private static Socket socket;
-    private static DataOutputStream dos;
-    private static DataInputStream dis;
+    private static ObjectOutputStream oos;
+    private static ObjectInputStream ois;
 
     public static Socket getSocket() {
         return socket;
     }
 
-    public static DataOutputStream getDOS() {
-        return dos;
+    public static ObjectOutputStream getOS() {
+        return oos;
     }
 
-    public static DataInputStream getDIS() {
-        return dis;
+    public static ObjectInputStream getIS() {
+        return ois;
     }
 
     public static void main(String[] args) {
         try {
             ipAddress = InetAddress.getByName(serverAddress);
             socket = new Socket(ipAddress, serverPort);
-            dos = new DataOutputStream(socket.getOutputStream());
-            dis = new DataInputStream(socket.getInputStream());
+            oos = new ObjectOutputStream(socket.getOutputStream());
+            ois = new ObjectInputStream(socket.getInputStream());
             ChatFrame chatFrame = new ChatFrame();
             chatFrame.pack();
             new ClientReceiver();

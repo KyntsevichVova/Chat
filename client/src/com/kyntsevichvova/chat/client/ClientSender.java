@@ -1,7 +1,8 @@
 package com.kyntsevichvova.chat.client;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
 public class ClientSender implements Runnable {
 
@@ -11,9 +12,10 @@ public class ClientSender implements Runnable {
     @Override
     public void run() {
         try {
-            DataOutputStream dos = Client.getDOS();
-            dos.writeUTF("/" + arg + " " + message + "\n");
-            dos.flush();
+            ObjectOutputStream os = Client.getOS();
+            HashMap<String, Object> map = Protocol.createChatMessage(arg, message);
+            os.writeObject(map);
+            os.flush();
         } catch (IOException e) {
             new ErrorFrame("Server is disabled");
         }

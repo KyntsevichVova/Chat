@@ -1,8 +1,9 @@
 package com.kyntsevichvova.chat.client;
 
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.HashMap;
 
 public class ClientReceiver implements Runnable {
 
@@ -16,21 +17,19 @@ public class ClientReceiver implements Runnable {
     public ClientReceiver() {
         socket = Client.getSocket();
         try {
-            DataInputStream dis = Client.getDIS();
+            ObjectInputStream is = Client.getIS();
             while (true) {
-                String tmp = dis.readUTF();
-                String arg = "", mes = "";
-                for (int i = 0; i < tmp.length() && tmp.charAt(i) != ' '; i++) {
-                    arg += tmp.charAt(i);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                try{
+                    map = (HashMap<String, Object>) is.readObject();
+                } catch (ClassNotFoundException e){
+                    e.printStackTrace();
                 }
-                for (int i = arg.length() + 1; i < tmp.length(); i++) {
-                    mes += tmp.charAt(i);
+                if (map.get("type").equals("error")) {
+                    new ErrorFrame((String)map.get("error"));
                 }
-                if (arg.startsWith("/error")) {
-                    new ErrorFrame(mes);
-                }
-                if (arg.startsWith("/message")) {
-                    ChatFrame.write(mes);
+                if (map.get("type").equals("message")) {
+                    ChatFrame.write((String)map.get("author") + "[" + (String)map.get("date") + "] : " + (String)map.get("message") + "\n");
                 }
             }
         } catch (IOException e) {

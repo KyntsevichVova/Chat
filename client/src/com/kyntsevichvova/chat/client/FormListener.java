@@ -28,11 +28,9 @@ public class FormListener implements ActionListener {
         if (s.length() == 0) {
             return false;
         }
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) == ' ') {
-                return false;
-            }
-        }
+        int pos = s.indexOf(' ');
+        if (pos != -1)
+            return false;
         return true;
     }
 }
