@@ -25,19 +25,19 @@ public class KLONTest {
     }
 
     public String generateString(Random random, int length) {
-        String string = "";
-        for (int i = 0; i < length; i++) string += (char) (random.nextInt(200));
-        return string;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) sb.append((char) ('a' + random.nextInt(30)));
+        return sb.toString();
     }
 
     @Test
     public void randomStorageTest() {
         KLON klon = new KLON();
-        String[] keys = new String[5];
-        Random random = new Random(5432);
+        String[] keys = new String[250];
+        Random random = new Random();
         for (int i = 0; i < keys.length; i++) {
             String key = generateString(random, i + 1);
-            int valueLength = random.nextInt(200) + 1;
+            int valueLength = random.nextInt(100) + 1;
             String value = generateString(random, valueLength);
             keys[i] = key;
             klon.putString(key, value);
