@@ -35,10 +35,10 @@ public class KLON {
             System.arraycopy(bytes, it, keyBytes, 0, keyLength);
             it += keyLength;
             String key = new String(keyBytes, CHARSET);
-            int valueLength = bytes[it++] << 24;
-            valueLength += bytes[it++] << 16;
-            valueLength += bytes[it++] << 8;
-            valueLength += bytes[it++];
+            int valueLength = (bytes[it++] & 0xFF) << 24;
+            valueLength += (bytes[it++] & 0xFF) << 16;
+            valueLength += (bytes[it++] & 0xFF) << 8;
+            valueLength += (bytes[it++] & 0xFF);
             byte[] value = new byte[valueLength];
             System.arraycopy(bytes, it, value, 0, valueLength);
             it += valueLength;
@@ -81,7 +81,7 @@ public class KLON {
     public byte[] toBytes() {
         int len = 0;
         for (Map.Entry<String, byte[]> entry : map.entrySet()) {
-            len += 5 + entry.getKey().length() + entry.getValue().length;
+            len += 5 + entry.getKey().getBytes(CHARSET).length + entry.getValue().length;
         }
         byte[] arr = new byte[len];
         int it = 0;

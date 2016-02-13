@@ -39,10 +39,10 @@ public class ClientConnection implements Runnable {
     public void run() {
         while (socket.isConnected() && !Thread.interrupted()) {
             try {
-                int length = is.read() << 24;
-                length += is.read() << 16;
-                length += is.read() << 8;
-                length += is.read();
+                int length = (is.read() & 0xFF) << 24;
+                length += (is.read() & 0xFF) << 16;
+                length += (is.read() & 0xFF) << 8;
+                length += (is.read() & 0xFF);
                 if (length > MAX_LENGTH) { //skip
                     is.skip(length);
                     continue;
@@ -56,7 +56,7 @@ public class ClientConnection implements Runnable {
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");
                 e.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException | NegativeArraySizeException e) {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();

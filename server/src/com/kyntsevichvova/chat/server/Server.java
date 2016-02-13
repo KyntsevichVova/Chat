@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class Server {
 
+
     static final String SERVER_FOLDER = "c:/home/vova/";
 
     private ServerSocket serverSocket;
