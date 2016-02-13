@@ -23,6 +23,8 @@ public class ClientConnection implements Runnable {
     public ClientConnection(Socket socket, Server server) throws IOException {
         this.server = server;
         this.socket = socket;
+        this.is = socket.getInputStream();
+        this.os = socket.getOutputStream();
         this.thread = new Thread(this);
     }
 
@@ -71,7 +73,7 @@ public class ClientConnection implements Runnable {
 
     public synchronized void sendMessage(KLON klon) {
         try {
-            os.write(klon.toBytes());
+            os.write(klon.toFullBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }

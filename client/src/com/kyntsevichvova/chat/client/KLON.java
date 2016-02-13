@@ -1,4 +1,4 @@
-package com.kyntsevichvova.chat.server;
+package com.kyntsevichvova.chat.client;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
