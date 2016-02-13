@@ -13,10 +13,7 @@ public class ClientReceiver implements Runnable {
         try {
             InputStream is = Client.getIS();
             while (true) {
-                int length = is.read() << 24;
-                length += is.read() << 16;
-                length += is.read() << 8;
-                length += is.read();
+                int length = KLON.bytesToInt((byte) is.read(), (byte) is.read(), (byte) is.read(), (byte) is.read());
                 byte[] bytes = new byte[length];
                 is.read(bytes);
                 KLON klon = KLON.parseBytes(bytes);

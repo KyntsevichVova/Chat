@@ -39,10 +39,8 @@ public class ClientConnection implements Runnable {
     public void run() {
         while (socket.isConnected() && !Thread.interrupted()) {
             try {
-                int length = (is.read() & 0xFF) << 24;
-                length += (is.read() & 0xFF) << 16;
-                length += (is.read() & 0xFF) << 8;
-                length += (is.read() & 0xFF);
+                int length = KLON.bytesToInt((byte) is.read(), (byte) is.read(), (byte) is.read(), (byte) is.read());
+                if (length < -1) break;
                 if (length > MAX_LENGTH) { //skip
                     is.skip(length);
                     continue;
@@ -57,7 +55,7 @@ public class ClientConnection implements Runnable {
                 ServerLogger.log("Exception was caught while reading message");
                 e.printStackTrace();
             } catch (ArrayIndexOutOfBoundsException | NegativeArraySizeException e) {
-                e.printStackTrace();
+                //ignored
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
