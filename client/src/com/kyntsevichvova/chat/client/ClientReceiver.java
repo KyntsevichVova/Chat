@@ -1,7 +1,7 @@
 package com.kyntsevichvova.chat.client;
 
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 
 public class ClientReceiver implements Runnable {
@@ -11,14 +11,11 @@ public class ClientReceiver implements Runnable {
     public ClientReceiver() {
         socket = Client.getSocket();
         try {
-            InputStream is = Client.getIS();
+            DataInputStream is = Client.getIS();
             while (true) {
-                int length = is.read() << 24;
-                length += is.read() << 16;
-                length += is.read() << 8;
-                length += is.read();
+                int length = is.readInt();
                 byte[] bytes = new byte[length];
-                is.read(bytes);
+                is.readFully(bytes);
                 KLON klon = KLON.parseBytes(bytes);
                 if (klon.getString("type").equals("error")) {
                     new ErrorFrame(klon.getString("error"));

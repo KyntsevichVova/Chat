@@ -1,8 +1,8 @@
 package com.kyntsevichvova.chat.server;
 
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
@@ -15,7 +15,7 @@ public class ClientConnection implements Runnable {
     private static Map<Server, Set<ClientConnection>> allConnections = new HashMap<>();
     private Socket socket;
     private Server server;
-    private InputStream is;
+    private DataInputStream dis;
     private OutputStream os;
     private Thread thread;
     private String login = null;
@@ -23,7 +23,7 @@ public class ClientConnection implements Runnable {
     public ClientConnection(Socket socket, Server server) throws IOException {
         this.server = server;
         this.socket = socket;
-        this.is = socket.getInputStream();
+        this.dis = new DataInputStream(socket.getInputStream());
         this.os = socket.getOutputStream();
         this.thread = new Thread(this);
     }
@@ -39,24 +39,21 @@ public class ClientConnection implements Runnable {
     public void run() {
         while (socket.isConnected() && !Thread.interrupted()) {
             try {
-                int length = is.read() << 24;
-                length += is.read() << 16;
-                length += is.read() << 8;
-                length += is.read();
+                int length = dis.readInt();
+                if (length < -1) break;
                 if (length > MAX_LENGTH) { //skip
-                    is.skip(length);
+                    dis.skipBytes(length);
                     continue;
                 }
                 byte[] bytes = new byte[length];
-                int actualLength = is.read(bytes);
-                if (actualLength != length) break;
+                dis.readFully(bytes);
                 server.onMessage(KLON.parseBytes(bytes), this);
             } catch (SocketException | EOFException e) {
                 break;
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");
                 e.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException | NegativeArraySizeException e) {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();

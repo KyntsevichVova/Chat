@@ -18,7 +18,8 @@ public class ClientSender implements Runnable {
         try {
             OutputStream os = Client.getOS();
             KLON klon = Protocol.createChatMessage(arg, message);
-            os.write(klon.toFullBytes());
+            byte[] bytes = klon.toFullBytes();
+            os.write(bytes);
             os.flush();
         } catch (IOException e) {
             new ErrorFrame("Server is disabled");
