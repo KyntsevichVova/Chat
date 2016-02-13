@@ -2,27 +2,27 @@ package com.kyntsevichvova.chat.server;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
 
 public class ClientConnection implements Runnable {
 
+    private final static int MAX_LENGTH = 8 * 1024 * 1024;
+
     private static Map<Server, Set<ClientConnection>> allConnections = new HashMap<>();
     private Socket socket;
     private Server server;
-    private ObjectInputStream objectInputStream;
-    private ObjectOutputStream objectOutputStream;
+    private InputStream is;
+    private OutputStream os;
     private Thread thread;
     private String login = null;
 
     public ClientConnection(Socket socket, Server server) throws IOException {
         this.server = server;
         this.socket = socket;
-        this.objectInputStream = new ObjectInputStream(socket.getInputStream());
-        this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         this.thread = new Thread(this);
     }
 
@@ -37,17 +37,28 @@ public class ClientConnection implements Runnable {
     public void run() {
         while (socket.isConnected() && !Thread.interrupted()) {
             try {
-                HashMap<String, Object> map = (HashMap<String, Object>) objectInputStream.readObject();
-                server.onMessage(map, this);
+                int length = is.read() << 24;
+                length += is.read() << 16;
+                length += is.read() << 8;
+                length += is.read();
+                if (length > MAX_LENGTH) { //skip
+                    is.skip(length);
+                    continue;
+                }
+                byte[] bytes = new byte[length];
+                int actualLength = is.read(bytes);
+                if (actualLength != length) break;
+                server.onMessage(KLON.parseBytes(bytes), this);
             } catch (SocketException | EOFException e) {
                 break;
             } catch (IOException e) {
                 ServerLogger.log("Exception was caught while reading message");
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
+            } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
-            } catch (ClassCastException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
+                break;
             }
         }
         server.disconnect(this);
@@ -58,9 +69,9 @@ public class ClientConnection implements Runnable {
         return socket;
     }
 
-    public void sendMessage(HashMap<String, Object> map) {
+    public synchronized void sendMessage(KLON klon) {
         try {
-            objectOutputStream.writeObject(map);
+            os.write(klon.toBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }

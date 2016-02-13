@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 
 /**
  *
@@ -108,32 +107,32 @@ public class Server {
         connection.setLogin(null);
     }
 
-    public void onMessage(HashMap<String, Object> map, ClientConnection connection) {
+    public void onMessage(KLON klon, ClientConnection connection) {
         try {
-            if (map.get("type").equals("message")) {
+            if (klon.getString("type").equals("message")) {
                 if (connections.isDisconnected(connection)) {
                     connection.sendError("You're not logged in");
                     return;
                 }
-                String message = (String) map.get("message");
+                String message = klon.getString("message");
                 message = message.replace("\n", "");
                 ServerLogger.log(String.format("New message from %s%n%s", connection, message));
                 connections.broadcast(Protocol.createChatMessage(connection.getLogin(), this.getDate(), message));
                 return;
             }
 
-            if (map.get("type").equals("signout")) {
+            if (klon.getString("type").equals("signout")) {
                 signOut(connection);
                 return;
             }
 
-            if (map.get("type").equals("signin")) {
-                signIn((String) map.get("login"), (String) map.get("password"), connection);
+            if (klon.getString("type").equals("signin")) {
+                signIn(klon.getString("login"), klon.getString("password"), connection);
                 return;
             }
 
-            if (map.get("type").equals("signup")) {
-                signUp((String) map.get("login"), (String) map.get("password"), connection);
+            if (klon.getString("type").equals("signup")) {
+                signUp(klon.getString("login"), klon.getString("password"), connection);
                 return;
             }
         } catch (Exception e) {
