@@ -20,6 +20,7 @@ public class Server {
     private ServerSocket serverSocket;
     private Connections connections;
     private Auth auth;
+    private Set<Socket> banned;
 
     private ServerWorker worker;
     private Thread socketHandler;
@@ -63,6 +64,13 @@ public class Server {
         server.start();
         server.join();
         ServerLogger.log("End of main was reached");
+    }
+    public void ban(Socket socket){
+        banned.add(socket);
+    }
+
+    public void unban(Socket socket){
+        banned.remove(socket);
     }
 
     public String getDate() {
